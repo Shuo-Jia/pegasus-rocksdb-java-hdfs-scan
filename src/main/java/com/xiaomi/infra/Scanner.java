@@ -1,8 +1,7 @@
 package com.xiaomi.infra;
 
-import org.rocksdb.RocksDB;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.RocksIterator;
-
 import java.util.*;
 
 class Scanner {
@@ -19,6 +18,9 @@ class Scanner {
   public RocksIterator next() {
     rocksIterator.next();
     if (rocksIterator.isValid()) {
+      if (rocksIterator.key() == null || rocksIterator.key().length < 2) {
+        rocksIterator.next();
+      }
       return rocksIterator;
     } else {
       seekToFirst();
@@ -30,8 +32,15 @@ class Scanner {
   public void seekToFirst() {
     if (scanners.hasNext()) {
       rocksIterator = scanners.next();
-      System.out.println("current partitionId iter:"+rocksIterator.toString());
       rocksIterator.seekToFirst();
+      //System.out.println("*****************" + rocksIterator + "**********************");
+      if (rocksIterator.isValid()) {
+        if (rocksIterator.key() == null || rocksIterator.key().length < 2) {
+          rocksIterator.next();
+        }
+      } else {
+        seekToFirst();
+      }
     }
   }
 
@@ -39,14 +48,13 @@ class Scanner {
     return scanners.hasNext();
   }
 
-  public byte[] key() {
-    return rocksIterator.key();
+  public PegasusKey key() {
+    Pair<byte[], byte[]> keyPair = Utils.restoreKey(rocksIterator.key());
+    return new PegasusKey(keyPair.getLeft(), keyPair.getRight());
   }
 
   public byte[] value() {
-    return rocksIterator.value();
+    return Utils.restoreValue(rocksIterator.value());
   }
 
-  public void free() {
-  }
 }

@@ -1,31 +1,27 @@
 package com.xiaomi.infra;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class Utils {
 
-  public static List<String> tablePaths = new ArrayList<>();
-
-  public static List<String> getTablePaths(String backUpRoot, String backUpCluster,
-      String backUpPolicyName, String backUpPolicyId,
-      String TableName, String TableId, int partitionCounter) {
-    partitionCounter = partitionCounter - 1;
-    while (partitionCounter >= 0) {
-      tablePaths.add(
-          backUpRoot + "/" + backUpCluster + "/" + backUpPolicyName + "/" + backUpPolicyId + "/" +
-              TableName + "_" + TableId + "/" + partitionCounter);
-      partitionCounter--;
-    }
-    return tablePaths;
+  public static Pair<byte[], byte[]> restoreKey(byte[] key) {
+    Validate.isTrue(key != null && key.length >= 2);
+    ByteBuffer buf = ByteBuffer.wrap(key);
+    int hashKeyLen = 0xFFFF & buf.getShort();
+    Validate.isTrue(hashKeyLen != 0xFFFF && (2 + hashKeyLen <= key.length));
+    return new ImmutablePair<byte[], byte[]>(
+        Arrays.copyOfRange(key, 2, 2 + hashKeyLen),
+        Arrays.copyOfRange(key, 2 + hashKeyLen, key.length));
   }
 
-  public static List<String> getTablePaths(String tablePath, int partitionCounter) {
-    partitionCounter = partitionCounter - 1;
-    while (partitionCounter >= 0) {
-      tablePaths.add(tablePath + "/" + partitionCounter+"/"+"chkpt_10.239.35.206_34803");
-      partitionCounter--;
-    }
-    return tablePaths;
+  public static byte[] restoreValue(byte[] value) {
+    return Arrays.copyOfRange(value, 4, value.length);
   }
 }

@@ -7,7 +7,7 @@ import org.rocksdb.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Rocksdbjava {
+public class Rocksdbjava implements AutoCloseable {
 
   static {
     RocksDB.loadLibrary();
@@ -19,16 +19,12 @@ public class Rocksdbjava {
   public Rocksdbjava() {
   }
 
-  public Rocksdbjava(Options options, List<String> tablePaths) throws RocksDBException {
-    for (String tablePath : tablePaths) {
-      rocksIteratorList.add(getRocksIterator(options, tablePath));
-    }
-  }
-
-  public Rocksdbjava(Options options, String tableNamePath, String checkpointName, int partitionCounter)
+  public Rocksdbjava(Options options, String tableNamePath, String checkpointName,
+      int partitionCounter)
       throws RocksDBException {
-    List<String> SSTPaths = getSSTPaths(tableNamePath, checkpointName, partitionCounter);
-    for (String path : SSTPaths) {
+    List<String> checkPointPath = getCheckPointPath(tableNamePath, checkpointName,
+        partitionCounter);
+    for (String path : checkPointPath) {
       rocksIteratorList.add(getRocksIterator(options, path));
     }
   }
@@ -37,8 +33,28 @@ public class Rocksdbjava {
     return new Scanner(rocksIteratorList);
   }
 
+  //todo
+  public RocksIterator getRocksIterator(Options options, String checkPointPath)
+      throws RocksDBException {
+    final RocksDB db = RocksDB.open(options, checkPointPath);
+    final RocksIterator rocksIterator = db.newIterator(new ReadOptions());
+    rocksDBMap.put(db, rocksIterator);
+    return rocksIterator;
+  }
 
-  public void close() {
+  private static List<String> getCheckPointPath(String tablePath, String checkpointName,
+      int partitionCounter) {
+    List<String> tablePaths = new ArrayList<>();
+    partitionCounter = partitionCounter - 1;
+    while (partitionCounter >= 0) {
+      tablePaths.add(tablePath + "/" + partitionCounter + "/" + checkpointName);
+      partitionCounter--;
+    }
+    return tablePaths;
+  }
+
+  @Override
+  public void close() throws Exception {
     for (Map.Entry<RocksDB, RocksIterator> entry : rocksDBMap.entrySet()) {
       entry.getValue().close();
       entry.getKey().close();
@@ -53,22 +69,5 @@ public class Rocksdbjava {
    * e.printStackTrace(); } return null; }
    **/
 
-  //todo
-  private RocksIterator getRocksIterator(Options options, String tablePath) throws RocksDBException {
-    final RocksDB db = RocksDB.open(options, tablePath);
-    final RocksIterator rocksIterator = db.newIterator(new ReadOptions());
-    rocksDBMap.put(db, rocksIterator);
-    return rocksIterator;
-  }
 
-  private static List<String> getSSTPaths(String tablePath, String checkpointName,
-      int partitionCounter) {
-    List<String> tablePaths = new ArrayList<>();
-    partitionCounter = partitionCounter - 1;
-    while (partitionCounter >= 0) {
-      tablePaths.add(tablePath + "/" + partitionCounter + "/" + checkpointName);
-      partitionCounter--;
-    }
-    return tablePaths;
-  }
 }
