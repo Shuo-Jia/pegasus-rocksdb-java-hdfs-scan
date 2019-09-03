@@ -2,6 +2,10 @@ package com.xiaomi.infra;
 
 import static org.junit.Assert.assertTrue;
 
+import com.xiaomi.infra.client.PegasusKey;
+import com.xiaomi.infra.client.RocksdbClient;
+import com.xiaomi.infra.client.RocksdbScanner;
+import com.xiaomi.infra.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.rocksdb.Env;
@@ -30,16 +34,16 @@ public class AppTest {
             .setCreateIfMissing(true)
             .setEnv(env)
             .setLevel0FileNumCompactionTrigger(-1)) {
-      try (Rocksdbjava rocksdbjava = new Rocksdbjava(options,
+      try (RocksdbClient rocksdbClient = new RocksdbClient(options,
           "/backup/scanner/1567419358655/scanner_2/",
           "chkpt_10.239.35.206_34801",
           4)) {
-        Scanner scanner = rocksdbjava.getRocksScanner();
-        for (scanner.seekToFirst(); scanner.hasNext(); scanner.next()) {
-          PegasusKey pegasusKey = scanner.key();
+        RocksdbScanner rocksdbScanner = rocksdbClient.getRocksScanner();
+        for (rocksdbScanner.seekToFirst(); rocksdbScanner.hasNext(); rocksdbScanner.next()) {
+          PegasusKey pegasusKey = rocksdbScanner.key();
           String hashKey = new String(pegasusKey.hashKey);
           String sortKey = new String(pegasusKey.sortKey);
-          String value = new String(scanner.value());
+          String value = new String(rocksdbScanner.value());
           System.out.println(hashKey + ":" + sortKey + "=>" + value);
         }
       } catch (Exception e) {
@@ -57,11 +61,11 @@ public class AppTest {
             .setCreateIfMissing(true)
             .setEnv(env)
             .setLevel0FileNumCompactionTrigger(-1)) {
-      try (Rocksdbjava rocksdbjava = new Rocksdbjava()) {
+      try (RocksdbClient rocksdbClient = new RocksdbClient()) {
         partitionCount--;
         while (partitionCount >= 0) {
           System.out.println("***********" + partitionCount + "***************");
-          RocksIterator rocksIterator = rocksdbjava.getRocksIterator(
+          RocksIterator rocksIterator = rocksdbClient.getRocksIterator(
               options,
               "/backup/scanner/1567419358655/scanner_2/" + partitionCount
                   + "/chkpt_10.239.35.206_34801");

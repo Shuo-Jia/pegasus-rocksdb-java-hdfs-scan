@@ -1,9 +1,9 @@
-package com.xiaomi.infra;
+package com.xiaomi.infra.client;
 
 public class PegasusKey {
 
-  byte[] hashKey;
-  byte[] sortKey;
+  public byte[] hashKey;
+  public byte[] sortKey;
 
   public PegasusKey(byte[] hashKey, byte[] sortKey) {
     this.hashKey = hashKey;

@@ -1,4 +1,4 @@
-package com.xiaomi.infra;
+package com.xiaomi.infra.utils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

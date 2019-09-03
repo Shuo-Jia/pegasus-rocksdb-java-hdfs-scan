@@ -1,16 +1,17 @@
-package com.xiaomi.infra;
+package com.xiaomi.infra.client;
 
+import com.xiaomi.infra.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.RocksIterator;
 import java.util.*;
 
-class Scanner {
+public class RocksdbScanner {
 
   private Iterator<RocksIterator> scanners;
   private RocksIterator rocksIterator;
 
 
-  public Scanner(List<RocksIterator> rocksIterators) {
+  public RocksdbScanner(List<RocksIterator> rocksIterators) {
     scanners = rocksIterators.iterator();
   }
 
